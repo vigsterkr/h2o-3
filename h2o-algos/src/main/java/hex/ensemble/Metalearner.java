@@ -3,8 +3,7 @@ package hex.ensemble;
 import hex.Model;
 import hex.ModelBuilder;
 import hex.ModelCategory;
-import hex.StackedEnsembleModel;
-import hex.StackedEnsembleModel.StackedEnsembleParameters;
+import hex.ensemble.StackedEnsembleModel.StackedEnsembleParameters;
 import hex.deeplearning.DeepLearning;
 import hex.deeplearning.DeepLearningModel;
 import hex.glm.GLM;
@@ -25,8 +24,46 @@ import water.exceptions.H2OIllegalArgumentException;
 import water.fvec.Frame;
 import water.util.Log;
 
-class Metalearner {
+public class Metalearner {
 
+    public enum Algorithm {
+        AUTO,
+        deeplearning,
+        drf,
+        gbm,
+        glm,
+    }
+
+    static Algorithm getActualMetalearnerAlgo(Algorithm algo) {
+        switch (algo) {
+            case AUTO:
+                return Algorithm.glm;
+            case gbm:
+            case glm:
+            case drf:
+            case deeplearning:
+                return algo;
+            default:
+                return null;
+        }
+    }
+
+    static Model.Parameters createParameters(Algorithm algo) {
+        switch (algo) {
+            case deeplearning:
+                return new DeepLearningModel.DeepLearningParameters();
+            case drf:
+                return  new DRFModel.DRFParameters();
+            case gbm:
+                return new GBMModel.GBMParameters();
+            case glm:
+            case AUTO:
+            default:
+                return new GLMModel.GLMParameters();
+        }
+    }
+
+    
     private Frame _levelOneTrainingFrame;
     private Frame _levelOneValidationFrame;
     private Model.Parameters _metalearner_parameters;

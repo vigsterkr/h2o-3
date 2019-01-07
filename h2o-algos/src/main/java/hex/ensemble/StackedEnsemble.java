@@ -3,8 +3,6 @@ package hex.ensemble;
 import hex.Model;
 import hex.ModelBuilder;
 import hex.ModelCategory;
-import hex.StackedEnsembleModel;
-import static hex.StackedEnsembleModel.StackedEnsembleParameters.MetalearnerAlgorithm;
 
 import water.DKV;
 import water.Job;
@@ -243,8 +241,8 @@ public class StackedEnsemble extends ModelBuilder<StackedEnsembleModel,StackedEn
                         _model._parms.valid());
       }
 
-      MetalearnerAlgorithm metalearnerAlgoSpec = _model._parms._metalearner_algorithm;
-      MetalearnerAlgorithm metalearnerAlgoImpl = getActualMetalearnerAlgo(metalearnerAlgoSpec);
+      Metalearner.Algorithm metalearnerAlgoSpec = _model._parms._metalearner_algorithm;
+      Metalearner.Algorithm metalearnerAlgoImpl = Metalearner.getActualMetalearnerAlgo(metalearnerAlgoSpec);
 
       // Compute metalearner
       if(metalearnerAlgoImpl != null) {
@@ -284,20 +282,6 @@ public class StackedEnsemble extends ModelBuilder<StackedEnsembleModel,StackedEn
                     "but must be one of 'glm', 'gbm', 'randomForest', or 'deeplearning'.");
       }
     } // computeImpl
-  }
-
-  private MetalearnerAlgorithm getActualMetalearnerAlgo(MetalearnerAlgorithm metalearner_algo) {
-    switch (metalearner_algo) {
-      case AUTO:
-        return MetalearnerAlgorithm.glm;
-      case gbm:
-      case glm:
-      case drf:
-      case deeplearning:
-        return metalearner_algo;
-      default:
-        return null;
-    }
   }
 
 }
