@@ -721,6 +721,55 @@ public abstract class GLMTask  {
     }
   }
 
+  static class GLMNegBinomialGradientIdentityTask extends GLMGradientTask {
+    private final GLMWeightsFun _glmf;
+    public GLMNegBinomialGradientIdentityTask(Key jobKey, DataInfo dinfo, GLMParameters parms, double lambda, double[] beta) {
+      super(jobKey, dinfo, parms._obj_reg, lambda, beta);
+      _glmf = new GLMWeightsFun(parms);
+    }
+    @Override protected void computeGradientMultipliers(double [] es, double [] ys, double [] ws){
+      double l = 0;
+      for(int i = 0; i < es.length; ++i) {
+        if (Double.isNaN(ys[i]) || ws[i] == 0) {
+          es[i] = 0;
+        } else {
+          double eta = es[i];
+          double mu = eta>0?eta:1e-12;  // avoid divide by zero here
+          double yr = ys[i];
+          double sum = mu + yr;
+          es[i] = ws[i]*(_glmf._invTheta/mu-sum/(mu+_glmf._invTheta));
+          l += ws[i] * (_glmf._invTheta*Math.log(mu)-sum*Math.log(mu+_glmf._invTheta));
+        }
+      }
+      _likelihood = l;
+    }
+  }
+
+
+  static class GLMNegBinomialGradientLogTask extends GLMGradientTask {
+    private final GLMWeightsFun _glmf;
+    public GLMNegBinomialGradientLogTask(Key jobKey, DataInfo dinfo, GLMParameters parms, double lambda, double[] beta) {
+      super(jobKey, dinfo, parms._obj_reg, lambda, beta);
+      _glmf = new GLMWeightsFun(parms);
+    }
+    @Override protected void computeGradientMultipliers(double [] es, double [] ys, double [] ws){
+      double l = 0;
+      for(int i = 0; i < es.length; ++i) {
+        if (Double.isNaN(ys[i]) || ws[i] == 0) {
+          es[i] = 0;
+        } else {
+          double eta = es[i];
+          double mu = Math.exp(eta);
+          double yr = ys[i];
+          double sum = mu + yr;
+          es[i] = ws[i]*(_glmf._invTheta-sum*mu/(mu+_glmf._invTheta));
+          l += ws[i] * (_glmf._invTheta*mu-sum*Math.log(mu+_glmf._invTheta));
+        }
+      }
+      _likelihood = l;
+    }
+  }
+
   static class GLMQuasiBinomialGradientTask extends GLMGradientTask {
     private final GLMWeightsFun _glmf;
     public GLMQuasiBinomialGradientTask(Key jobKey, DataInfo dinfo, GLMParameters parms, double lambda, double[] beta) {

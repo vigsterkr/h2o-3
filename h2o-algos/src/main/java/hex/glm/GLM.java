@@ -374,39 +374,54 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
     _parms.validate(this);
     if(_response != null) {
       if(!isClassifier() && _response.isCategorical())
-        error("_response", H2O.technote(2, "Regression requires numeric response, got categorical."));
-      if ((_parms._solver.equals(Solver.GRADIENT_DESCENT_LH) || _parms._solver.equals(Solver.GRADIENT_DESCENT_SQERR)) && !_parms._family.equals(Family.ordinal))
+        error("_response", H2O.technote(2, "Regression requires numeric response, got" +
+                " categorical."));
+      if ((_parms._solver.equals(Solver.GRADIENT_DESCENT_LH) || _parms._solver.equals(Solver.GRADIENT_DESCENT_SQERR))
+              && !_parms._family.equals(Family.ordinal))
         error("_solver", "Solvers GRADIENT_DESCENT_LH and GRADIENT_DESCENT_SQERR are only " +
                 "supported for ordinal regression.  Do not choose them unless you specify your family to be ordinal");
       switch (_parms._family) {
         case binomial:
           if (!_response.isBinary() && _nclass != 2)
-            error("_family", H2O.technote(2, "Binomial requires the response to be a 2-class categorical or a binary column (0/1)"));
+            error("_family", H2O.technote(2, "Binomial requires the response to be a " +
+                    "2-class categorical or a binary column (0/1)"));
           break;
         case multinomial:
           if (_nclass <= 2)
-            error("_family", H2O.technote(2, "Multinomial requires a categorical response with at least 3 levels (for 2 class problem use family=binomial."));
+            error("_family", H2O.technote(2, "Multinomial requires a categorical response" +
+                    " with at least 3 levels (for 2 class problem use family=binomial."));
           break;
         case poisson:
-          if (_nclass != 1) error("_family", "Poisson requires the response to be numeric.");
+        case negbinomial:  
+          if (_nclass != 1) error("_family", "Poisson and Negative Binomial require the response" +
+                  " to be numeric.");
           if (_response.min() < 0)
-            error("_family", "Poisson requires response >= 0");
+            error("_family", "Poisson and Negative Binomial require response >= 0");
           if (!_response.isInt())
-            warn("_family", "Poisson expects non-negative integer response, got floats.");
+            warn("_family", "Poisson and Negative Binomial expect non-negative integer response," +
+                    " got floats.");
+          if (_parms._family.equals(Family.negbinomial) && (_parms._theta <= 0 || _parms._theta>1))
+            error("_family", "Illegal Negative Binomial theta value.  Valid theta values be > 0" +
+                    " and <= 1.");
           break;
         case gamma:
-          if (_nclass != 1) error("_distribution", H2O.technote(2, "Gamma requires the response to be numeric."));
-          if (_response.min() <= 0) error("_family", "Response value for gamma distribution must be greater than 0.");
+          if (_nclass != 1) error("_distribution", H2O.technote(2, "Gamma requires the" +
+                  " response to be numeric."));
+          if (_response.min() <= 0) error("_family", "Response value for gamma distribution must" +
+                  " be greater than 0.");
           break;
         case tweedie:
-          if (_nclass != 1) error("_family", H2O.technote(2, "Tweedie requires the response to be numeric."));
+          if (_nclass != 1) error("_family", H2O.technote(2, "Tweedie requires the " +
+                  "response to be numeric."));
           break;
         case quasibinomial:
-          if (_nclass != 1) error("_family", H2O.technote(2, "Quasi_binomial requires the response to be numeric."));
+          if (_nclass != 1) error("_family", H2O.technote(2, "Quasi_binomial requires the" +
+                  " response to be numeric."));
           break;
         case ordinal:
           if (_nclass <= 2)
-            error("_family", H2O.technote(2, "Ordinal requires a categorical response with at least 3 levels (for 2 class problem use family=binomial."));
+            error("_family", H2O.technote(2, "Ordinal requires a categorical response " +
+                    "with at least 3 levels (for 2 class problem use family=binomial."));
           if (_parms._link == Link.oprobit || _parms._link == Link.ologlog)
             error("_link", "Ordinal regression only supports ologit as link.");
           break;
@@ -1882,6 +1897,11 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
           gt = new GLMBinomialGradientTask(_job == null?null:_job._key,_dinfo,_parms,_l2pen, beta).doAll(_dinfo._adaptedFrame);
         else if(_parms._family == Family.gaussian && _parms._link == Link.identity)
           gt = new GLMGaussianGradientTask(_job == null?null:_job._key,_dinfo,_parms,_l2pen, beta).doAll(_dinfo._adaptedFrame);
+        else if (_parms._family.equals(Family.negbinomial))
+          gt = _parms._link == Link.log? (new GLMNegBinomialGradientLogTask(_job == null?null:_job._key,_dinfo,
+                  _parms,_l2pen, beta).doAll(_dinfo._adaptedFrame))
+                  :(new GLMNegBinomialGradientIdentityTask(_job == null?null:_job._key,_dinfo,_parms,_l2pen,
+                  beta).doAll(_dinfo._adaptedFrame));
         else if(_parms._family == Family.poisson && _parms._link == Link.log)
           gt = new GLMPoissonGradientTask(_job == null?null:_job._key,_dinfo,_parms,_l2pen, beta).doAll(_dinfo._adaptedFrame);
         else if(_parms._family == Family.quasibinomial)

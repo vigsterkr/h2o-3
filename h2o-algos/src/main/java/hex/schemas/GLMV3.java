@@ -37,6 +37,7 @@ public class GLMV3 extends ModelBuilderSchema<GLM,GLMV3,GLMV3.GLMParametersV3> {
             "family",
             "tweedie_variance_power",
             "tweedie_link_power",
+            "theta", // equals to 1/r and should be > 0 and <=1, used by negative binomial
             "solver",
             "alpha",
             "lambda",
@@ -85,6 +86,9 @@ public class GLMV3 extends ModelBuilderSchema<GLM,GLMV3,GLMV3.GLMParametersV3> {
 
     @API(help = "Tweedie link power", level = Level.critical, gridable = true)
     public double tweedie_link_power;
+
+    @API(help = "Theta", level = Level.critical, gridable = true)
+    public double theta; // used by negtaive binomial distribution family and should be >0 and <=1
 
     @API(help = "AUTO will set the solver based on given data and the other parameters. IRLSM is fast on on problems with small number of predictors and for lambda-search with L1 penalty, L_BFGS scales better for datasets with many columns.", values = {"AUTO", "IRLSM", "L_BFGS","COORDINATE_DESCENT_NAIVE", "COORDINATE_DESCENT", "GRADIENT_DESCENT_LH", "GRADIENT_DESCENT_SQERR"}, level = Level.critical)
     public Solver solver;
