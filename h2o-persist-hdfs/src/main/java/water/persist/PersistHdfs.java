@@ -294,9 +294,18 @@ public final class PersistHdfs extends Persist {
   private static void addFolder(FileSystem fs, Path p, ArrayList<String> keys, ArrayList<String> failed) {
     if (fs == null) return;
     Futures futures = new Futures();
+    final URI originalPathUri = p.toUri();
     try {
       for( FileStatus file : fs.listStatus(p, HIDDEN_FILE_FILTER) ) {
         Path pfs = file.getPath();
+        final URI s3File = pfs.toUri();
+        if(s3File.getUserInfo() == null && originalPathUri.getUserInfo() != null){
+          // If the original URI contained user Info, it should be inserted into the returned URI,
+          // as the client library does not include it since version 2.8.x
+          URI fetchUri = new URI(s3File.getScheme(), encodeCredentialsInUri(originalPathUri), s3File.getHost(), s3File.getPort(),
+                  s3File.getPath(), s3File.getQuery(), s3File.getFragment());
+          pfs = new Path(fetchUri);
+        }
         if(file.isDirectory()) {
           addFolder(fs, pfs, keys, failed);
         } else if (file.getLen() > 0){
@@ -407,7 +416,7 @@ public final class PersistHdfs extends Persist {
 
   static final Pattern SECRET_KEYS_PATTERN = Pattern.compile("(.+):{1}(.+)");
   
-  private String encodeCredentialsInUri(final URI originalUri) {
+  private static String encodeCredentialsInUri(final URI originalUri) {
     if (originalUri.getUserInfo() == null) return null;
 
     try {
