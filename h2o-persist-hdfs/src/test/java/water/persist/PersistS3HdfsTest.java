@@ -71,7 +71,7 @@ public class PersistS3HdfsTest extends TestUtil  {
     s3UrlBuilder.append(accessKey);
     s3UrlBuilder.append(":");
     s3UrlBuilder.append(secretKey);
-    s3UrlBuilder.append("@h2o-unit-tests/iris.csv");
+    s3UrlBuilder.append("@test.0xdata.com/h2o-unit-tests/iris.csv");
 
     Scope.enter();
     Key k = null, k2 = null;
@@ -119,7 +119,7 @@ public class PersistS3HdfsTest extends TestUtil  {
     s3UrlBuilder.append(accessKey);
     s3UrlBuilder.append(":");
     s3UrlBuilder.append(secretKey);
-    s3UrlBuilder.append("@h2o-unit-tests/iris.csv");
+    s3UrlBuilder.append("@test.0xdata.com/h2o-unit-tests/iris.csv");
 
     final PersistHdfs persistHdfs = new PersistHdfs();
     final ArrayList<String> strings = persistHdfs.calcTypeaheadMatches(s3UrlBuilder.toString(), 10);
@@ -142,7 +142,7 @@ public class PersistS3HdfsTest extends TestUtil  {
     s3UrlBuilder.append(accessKey);
     s3UrlBuilder.append(":");
     s3UrlBuilder.append(secretKey);
-    s3UrlBuilder.append("@h2o-unit-tests/iris.csv");
+    s3UrlBuilder.append("@test.0xdata.com/h2o-unit-tests/iris.csv");
     
     final PersistHdfs persistHdfs = new PersistHdfs();
     final ArrayList<String> keys = new ArrayList<>();
@@ -179,7 +179,7 @@ public class PersistS3HdfsTest extends TestUtil  {
     s3UrlBuilder.append(accessKey);
     s3UrlBuilder.append(":");
     s3UrlBuilder.append(secretKey);
-    s3UrlBuilder.append("@h2o-unit-tests");
+    s3UrlBuilder.append("@test.0xdata.com/h2o-unit-tests/");
 
     final PersistHdfs persistHdfs = new PersistHdfs();
     final ArrayList<String> keys = new ArrayList<>();

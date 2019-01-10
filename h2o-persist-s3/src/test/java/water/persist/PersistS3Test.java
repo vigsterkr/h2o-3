@@ -83,7 +83,7 @@ public class PersistS3Test extends TestUtil {
     s3UrlBuilder.append(accessKey);
     s3UrlBuilder.append(":");
     s3UrlBuilder.append(secretKey);
-    s3UrlBuilder.append("@h2o-unit-tests/iris.csv");
+    s3UrlBuilder.append("@test.0xdata.com/h2o-unit-tests/iris.csv");
     
     Scope.enter();
     Key k = null, k2 = null;
