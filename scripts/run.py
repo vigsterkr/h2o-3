@@ -903,7 +903,7 @@ class Test(object):
 
     @staticmethod
     def _dryrun_test_cmd(test_name, ip, port, on_hadoop, hadoop_namenode):
-        cmd = ["printf", "DRYRUN: %s %s %s %s\n", 
+        cmd = ["ERRprintf", "DRYRUN: %s %s %s %s\n", 
                test_name, 
                ip + ":" + str(port), 
                "on-hadoop" if on_hadoop else "", 
