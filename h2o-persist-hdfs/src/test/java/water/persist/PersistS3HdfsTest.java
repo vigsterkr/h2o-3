@@ -129,6 +129,80 @@ public class PersistS3HdfsTest extends TestUtil  {
     assertEquals(s3UrlBuilder.toString(), strings.get(0));
   }
 
+  @Test
+  public void testImportFiles() throws Exception {
+    // This test is only runnable in environment with Amazon credentials properly set {AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY}
+    final String accessKey = System.getenv(AWS_ACCESS_KEY_PROPERTY_NAME);
+    final String secretKey = System.getenv(AWS_SECRET_KEY_PROPERTY_NAME);
+
+    assumeTrue(accessKey != null);
+    assumeTrue(secretKey != null);
+
+    StringBuilder s3UrlBuilder = new StringBuilder("s3a://");
+    s3UrlBuilder.append(accessKey);
+    s3UrlBuilder.append(":");
+    s3UrlBuilder.append(secretKey);
+    s3UrlBuilder.append("@h2o-unit-tests/iris.csv");
+    
+    final PersistHdfs persistHdfs = new PersistHdfs();
+    final ArrayList<String> keys = new ArrayList<>();
+    final ArrayList<String> fails = new ArrayList<>();
+    final ArrayList<String> deletions = new ArrayList<>();
+    final ArrayList<String> files = new ArrayList<>();
+    
+    try {
+      persistHdfs.importFiles(s3UrlBuilder.toString(), null, files, keys, fails, deletions);
+      assertEquals(0, fails.size());
+      assertEquals(0, deletions.size());
+      assertEquals(1, files.size());
+      assertEquals(1, keys.size());
+    } finally {
+      for (String key : keys){
+        final Iced iced = DKV.getGet(key);
+        assertTrue(iced instanceof Frame);
+        final Frame frame = (Frame) iced;
+        frame.remove();
+      }
+    }
+  }
+
+  @Test
+  public void testImportFilesFromBucketFolder() throws Exception {
+    // This test is only runnable in environment with Amazon credentials properly set {AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY}
+    final String accessKey = System.getenv(AWS_ACCESS_KEY_PROPERTY_NAME);
+    final String secretKey = System.getenv(AWS_SECRET_KEY_PROPERTY_NAME);
+
+    assumeTrue(accessKey != null);
+    assumeTrue(secretKey != null);
+
+    StringBuilder s3UrlBuilder = new StringBuilder("s3a://");
+    s3UrlBuilder.append(accessKey);
+    s3UrlBuilder.append(":");
+    s3UrlBuilder.append(secretKey);
+    s3UrlBuilder.append("@h2o-unit-tests");
+
+    final PersistHdfs persistHdfs = new PersistHdfs();
+    final ArrayList<String> keys = new ArrayList<>();
+    final ArrayList<String> fails = new ArrayList<>();
+    final ArrayList<String> deletions = new ArrayList<>();
+    final ArrayList<String> files = new ArrayList<>();
+
+    try {
+      persistHdfs.importFiles(s3UrlBuilder.toString(), null, files, keys, fails, deletions);
+      assertEquals(0, fails.size());
+      assertEquals(0, deletions.size());
+      assertEquals(2, files.size());
+      assertEquals(2, keys.size());
+    } finally {
+      for (String key : keys){
+        final Iced iced = DKV.getGet(key);
+        assertTrue(iced instanceof Frame);
+        final Frame frame = (Frame) iced;
+        frame.remove();
+      }
+    }
+  }
+
   private Object getValue(Object o, String... fieldNames) {
     StringBuilder path = new StringBuilder(o.getClass().getName());
     for (String f : fieldNames) {
