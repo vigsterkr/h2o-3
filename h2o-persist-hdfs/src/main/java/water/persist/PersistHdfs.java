@@ -3,14 +3,11 @@ package water.persist;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
@@ -378,7 +375,9 @@ public final class PersistHdfs extends Persist {
       Path p = new Path(filter);
       Path expand = p;
       final URI uri = p.toUri();
-      final String comparedPath = p.toString();
+      final URI comparedUri = new URI(uri.getScheme(), encodeCredentialsInUri(uri), uri.getHost(), uri.getPort(),
+              uri.getPath(), uri.getQuery(), uri.getFragment());
+      final String comparedPath = comparedUri.toString();
       if( !filter.endsWith("/") ) expand = p.getParent();
       FileSystem fs = FileSystem.get(uri, conf);
       for( FileStatus file : fs.listStatus(expand) ) {
@@ -387,9 +386,9 @@ public final class PersistHdfs extends Persist {
         if(s3File.getUserInfo() == null && uri.getUserInfo() != null){
           // If the original URI contained user Info, it should be inserted into the returned URI,
           // as the client library does not include it since version 2.8.x
-          URI newUri = new URI(s3File.getScheme(), uri.getUserInfo(), s3File.getHost(), s3File.getPort(),
+          URI fetchUri = new URI(s3File.getScheme(), encodeCredentialsInUri(uri), s3File.getHost(), s3File.getPort(),
                   s3File.getPath(), s3File.getQuery(), s3File.getFragment());
-          s3FilePathString = newUri.toString();
+          s3FilePathString = fetchUri.toString();
         } else {
           s3FilePathString = s3File.toString();
         }
@@ -404,6 +403,34 @@ public final class PersistHdfs extends Persist {
     }
 
     return array;
+  }
+
+  static final Pattern SECRET_KEYS_PATTERN = Pattern.compile("(.+):{1}(.+)");
+  
+  private String encodeCredentialsInUri(final URI originalUri) {
+    if (originalUri.getUserInfo() == null) return null;
+
+    try {
+      final String userInfo = originalUri.getUserInfo();
+      return encodeCredentialsPair(userInfo);
+      
+    } catch (UnsupportedEncodingException e) {
+      throw new IllegalStateException("Unsupported UTF-8 encoding.", e);
+    }
+  }
+  
+  private static String encodeCredentialsPair(final String credentialsPair) throws UnsupportedEncodingException {
+    final Matcher credentialsMatcher = SECRET_KEYS_PATTERN.matcher(credentialsPair);
+    if (credentialsMatcher.matches()) {
+      final String keyIdEncoded = URLEncoder.encode(credentialsMatcher.group(1), "utf-8");
+      final String secretKeyEncoded = URLEncoder.encode(credentialsMatcher.group(2), "utf-8");
+
+      final StringBuilder credentialsBuilder = new StringBuilder(keyIdEncoded);
+      credentialsBuilder.append(':');
+      credentialsBuilder.append(secretKeyEncoded);
+
+      return credentialsBuilder.toString();
+    } else return credentialsPair;
   }
 
   @Override
