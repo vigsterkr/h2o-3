@@ -444,6 +444,7 @@ public final class PersistHdfs extends Persist {
 
   @Override
   public void   importFiles(String path, String pattern, ArrayList<String> files, ArrayList<String> keys, ArrayList<String> fails, ArrayList<String> dels) {
+    path = encodeCredentialsIfPresent(path);
 //    path = convertS3toS3N(path);
 
     // Fix for S3 kind of URL
@@ -460,6 +461,28 @@ public final class PersistHdfs extends Persist {
       // write barrier was here : DKV.write_barrier();
     } catch (IOException e) {
       throw new HDFSIOException(path, PersistHdfs.CONF.toString(), e);
+    }
+  }
+  
+  private static final Pattern CREDENTIALS_PATTERN = Pattern.compile("s3[an]://(.[^:]*):{0,1}(.[^@]*)@{1}.*");
+  private static String encodeCredentialsIfPresent(final String originalPath){
+    final Matcher matcher = CREDENTIALS_PATTERN.matcher(originalPath);
+    if(!matcher.matches()) return originalPath;
+
+    final String accesKeyId = matcher.group(1);
+    final String secretKey = matcher.group(2);
+
+    try {
+      final String encodedAccesKeyId = URLEncoder.encode(accesKeyId, "utf-8");
+      final String encodedSecretKey = URLEncoder.encode(secretKey, "utf-8");
+
+      String encodedCredentialsPath = originalPath.replace(accesKeyId, encodedAccesKeyId);
+      encodedCredentialsPath = encodedCredentialsPath.replace(secretKey, encodedSecretKey);
+      
+      return encodedCredentialsPath;
+
+    } catch (UnsupportedEncodingException e) {
+      throw new IllegalStateException("UTF-8 encoding is unsupported, unable to encode S3 credential in URI.");
     }
   }
 
