@@ -451,7 +451,7 @@ public final class PersistHdfs extends Persist {
     if (isBareS3NBucketWithoutTrailingSlash(path)) {
       path += "/";
     }
-    Log.info("ImportHDFS processing (" + path + ")");
+    Log.info("ImportHDFS processing (" + redactAmazonCredentials(path) + ")");
 
     // List of processed files
     try {
@@ -480,6 +480,14 @@ public final class PersistHdfs extends Persist {
       
       concatenated = stringBuilder.toString();
     }
+  }
+  
+  private static final String redactAmazonCredentials(final String uri){
+    final Matcher matcher = CREDENTIALS_PATTERN.matcher(uri);
+    if(!matcher.matches()) return uri;
+
+    String encodedCredentialsPath = uri.replace(matcher.group(1), "SECRETKEYID");
+    return encodedCredentialsPath.replace(matcher.group(2), "SECRETKEY");
   }
   
   
