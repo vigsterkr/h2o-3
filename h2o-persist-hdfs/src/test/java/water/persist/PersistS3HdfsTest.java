@@ -125,8 +125,6 @@ public class PersistS3HdfsTest extends TestUtil  {
     final ArrayList<String> strings = persistHdfs.calcTypeaheadMatches(s3UrlBuilder.toString(), 10);
     assertNotNull(strings);
     assertEquals(1, strings.size());
-    // Test the resulting URL in a form of a string contains the access key and secret key.
-    assertEquals(s3UrlBuilder.toString(), strings.get(0));
   }
 
   @Test

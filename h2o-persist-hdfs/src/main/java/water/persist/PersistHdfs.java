@@ -30,6 +30,8 @@ public final class PersistHdfs extends Persist {
   public static final Configuration CONF;
   /** Root path of HDFS */
   private final Path _iceRoot;
+  
+  private static final String DEFAULT_CHARSET = "utf-8";
 
   /**
    * Filter out hidden files/directories (dot files, eg.: .crc).
@@ -306,9 +308,9 @@ public final class PersistHdfs extends Persist {
           Key k;
           if(amazonCredentials != null) {
             URI uri = pfs.toUri();
-            //Decode the concatenated credentials in case those contain encoded chars. URI construct is going to encode
+            //Decode the concatenated credentials in case those contain encoded chars. URI constructor is going to encode
             // them once again
-            uri = new URI(uri.getScheme(), URLDecoder.decode(amazonCredentials.concatenated, "utf-8"), uri.getHost(), uri.getPort(), uri.getPath(),uri.getQuery(), uri.getFragment());
+            uri = new URI(uri.getScheme(), URLDecoder.decode(amazonCredentials.concatenated, DEFAULT_CHARSET), uri.getHost(), uri.getPort(), uri.getPath(),uri.getQuery(), uri.getFragment());
             k = HDFSFileVec.make(uri.toString(), file.getLen(), futures);
           } else {
             k = HDFSFileVec.make(pfs.toString(), file.getLen(), futures);
@@ -334,24 +336,18 @@ public final class PersistHdfs extends Persist {
     assert "hdfs".equals(uri.getScheme()) || "s3".equals(uri.getScheme())
             || "s3n".equals(uri.getScheme()) || "s3a".equals(uri.getScheme()) : "Expected hdfs, s3 s3n, or s3a scheme, but uri is " + uri;
 
+      final String uriWithCredentials = encodeCredentialsIfPresent(uri.toString());
+      if(uriWithCredentials != null) {
+        uri = URI.create(uriWithCredentials);
+      }
+
     FileSystem fs = FileSystem.get(uri, PersistHdfs.CONF);
     FileStatus[] fstatus = fs.listStatus(new Path(uri));
     assert fstatus.length == 1 : "Expected uri to single file, but uri is " + uri;
-
-    return HDFSFileVec.make(fstatus[0].getPath().toString(), fstatus[0].getLen());
+    // The FileSystem API may return the path with decoded credentials - thus it is required to re-encode.
+    return HDFSFileVec.make(encodeCredentialsIfPresent(fstatus[0].getPath().toString()), fstatus[0].getLen());
   }
-
-  public static FileSystem getFS(String path) throws IOException {
-    try {
-      return getFS(new URI(path));
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
-  }
-  public static FileSystem getFS(URI uri) throws IOException {
-    return FileSystem.get(uri, PersistHdfs.CONF);
-  }
-
+  
   // Is there a bucket name without a trailing "/" ?
   private boolean isBareS3NBucketWithoutTrailingSlash(String s) {
     String s2 = s.toLowerCase();
@@ -388,6 +384,7 @@ public final class PersistHdfs extends Persist {
       if ("maprfs:".equals(s)) return array;
     }
     try {
+      filter = encodeCredentialsIfPresent(filter);
       Path p = new Path(filter);
       Path expand = p;
       final URI uri = new URI(p.toString());
@@ -428,8 +425,8 @@ public final class PersistHdfs extends Persist {
     if (amazonCredentials == null) return null;
 
     try {
-      final String keyIdEncoded = URLDecoder.decode(amazonCredentials.accessKeyId, "utf-8");
-      final String secretKeyEncoded = URLDecoder.decode(amazonCredentials.secretAccessKey, "utf-8");
+      final String keyIdEncoded = URLDecoder.decode(amazonCredentials.accessKeyId, DEFAULT_CHARSET);
+      final String secretKeyEncoded = URLDecoder.decode(amazonCredentials.secretAccessKey, DEFAULT_CHARSET);
 
       final StringBuilder credentialsBuilder = new StringBuilder(keyIdEncoded);
       credentialsBuilder.append(':');
@@ -509,14 +506,14 @@ public final class PersistHdfs extends Persist {
       final String encodedAccesKeyId;
       // Both might be already pre-encoded when retrieved from FileSystem or from previous stages
       // Encoding again would malform the credentials, thus pre-checked first
-      if(URLDecoder.decode(accesKeyId, "utf-8").equals(accesKeyId)) {
-        encodedAccesKeyId = URLEncoder.encode(accesKeyId, "utf-8");
+      if(URLDecoder.decode(accesKeyId, DEFAULT_CHARSET).equals(accesKeyId)) {
+        encodedAccesKeyId = URLEncoder.encode(accesKeyId, DEFAULT_CHARSET);
       } else encodedAccesKeyId = accesKeyId;
       
       final String encodedSecretKey;
       
-      if(URLDecoder.decode(secretKey, "utf-8").equals(secretKey)){
-         encodedSecretKey = URLEncoder.encode(secretKey, "utf-8");
+      if(URLDecoder.decode(secretKey, DEFAULT_CHARSET).equals(secretKey)){
+         encodedSecretKey = URLEncoder.encode(secretKey, DEFAULT_CHARSET);
       } else encodedSecretKey = secretKey;
 
       String encodedCredentialsPath = originalPath.replace(accesKeyId, encodedAccesKeyId);
