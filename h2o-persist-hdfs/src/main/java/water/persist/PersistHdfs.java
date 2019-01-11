@@ -350,7 +350,7 @@ public final class PersistHdfs extends Persist {
   
   
   // Is there a bucket name without a trailing "/" ?
-  private static final Pattern BUCKET_ONLY_PATTERN = Pattern.compile("s3[an]://.@{0,1}[^/]*");
+  private static final Pattern BUCKET_ONLY_PATTERN = Pattern.compile("s3n://.@{0,1}[^/]*");
   private boolean isBareS3NBucketWithoutTrailingSlash(String s) {
     String s2 = s.toLowerCase();
     Matcher m = BUCKET_ONLY_PATTERN.matcher(s2);
