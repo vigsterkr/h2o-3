@@ -184,6 +184,7 @@ public class GLMModel extends Model<GLMModel,GLMModel.GLMParameters,GLMModel.GLM
     public double _tweedie_variance_power;
     public double _tweedie_link_power;
     public double _theta; // 1/k and is used by negative binomial distribution only
+    public boolean _optimize_theta=true; // true to optimize theta, false to leave it alone
     public double [] _alpha = null;
     public double [] _lambda = null;
     public MissingValuesHandling _missing_values_handling = MissingValuesHandling.MeanImputation;
@@ -542,8 +543,9 @@ public class GLMModel extends Model<GLMModel,GLMModel.GLMParameters,GLMModel.GLM
     final Link _link;
     final double _var_power;
     final double _link_power;
-    final double _theta;  // used by negative binomial, 0 < _theta <= 1
-    final double _invTheta;
+    double _theta;  // used by negative binomial, 0 < _theta <= 1
+    double _invTheta;
+    //final boolean _optimizetheta;
     final NormalDistribution _dprobit = new NormalDistribution(0,1);  // get the normal distribution
     
     public GLMWeightsFun(GLMParameters parms) {this(parms._family,parms._link, parms._tweedie_variance_power, 

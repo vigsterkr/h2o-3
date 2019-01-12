@@ -37,13 +37,14 @@ class H2OGeneralizedLinearEstimator(H2OEstimator):
                       "keep_cross_validation_models", "keep_cross_validation_predictions",
                       "keep_cross_validation_fold_assignment", "fold_assignment", "fold_column", "response_column",
                       "ignored_columns", "ignore_const_cols", "score_each_iteration", "offset_column", "weights_column",
-                      "family", "tweedie_variance_power", "tweedie_link_power", "theta", "solver", "alpha", "lambda_",
-                      "lambda_search", "early_stopping", "nlambdas", "standardize", "missing_values_handling",
-                      "compute_p_values", "remove_collinear_columns", "intercept", "non_negative", "max_iterations",
-                      "objective_epsilon", "beta_epsilon", "gradient_epsilon", "link", "prior", "lambda_min_ratio",
-                      "beta_constraints", "max_active_predictors", "interactions", "interaction_pairs", "obj_reg",
-                      "export_checkpoints_dir", "balance_classes", "class_sampling_factors", "max_after_balance_size",
-                      "max_confusion_matrix_size", "max_hit_ratio_k", "max_runtime_secs", "custom_metric_func"}
+                      "family", "tweedie_variance_power", "tweedie_link_power", "theta", "optimize_theta", "solver",
+                      "alpha", "lambda_", "lambda_search", "early_stopping", "nlambdas", "standardize",
+                      "missing_values_handling", "compute_p_values", "remove_collinear_columns", "intercept",
+                      "non_negative", "max_iterations", "objective_epsilon", "beta_epsilon", "gradient_epsilon", "link",
+                      "prior", "lambda_min_ratio", "beta_constraints", "max_active_predictors", "interactions",
+                      "interaction_pairs", "obj_reg", "export_checkpoints_dir", "balance_classes",
+                      "class_sampling_factors", "max_after_balance_size", "max_confusion_matrix_size",
+                      "max_hit_ratio_k", "max_runtime_secs", "custom_metric_func"}
         if "Lambda" in kwargs: kwargs["lambda_"] = kwargs.pop("Lambda")
         for pname, pvalue in kwargs.items():
             if pname == 'model_id':
@@ -344,6 +345,21 @@ class H2OGeneralizedLinearEstimator(H2OEstimator):
     def theta(self, theta):
         assert_is_type(theta, None, numeric)
         self._parms["theta"] = theta
+
+
+    @property
+    def optimize_theta(self):
+        """
+        Optimize theta
+
+        Type: ``bool``  (default: ``True``).
+        """
+        return self._parms.get("optimize_theta")
+
+    @optimize_theta.setter
+    def optimize_theta(self, optimize_theta):
+        assert_is_type(optimize_theta, None, bool)
+        self._parms["optimize_theta"] = optimize_theta
 
 
     @property
