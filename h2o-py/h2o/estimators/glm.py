@@ -292,13 +292,13 @@ class H2OGeneralizedLinearEstimator(H2OEstimator):
         Family. Use binomial for classification with logistic regression, others are for regression problems.
 
         One of: ``"gaussian"``, ``"binomial"``, ``"quasibinomial"``, ``"ordinal"``, ``"multinomial"``, ``"poisson"``,
-        ``"gamma"``, ``"tweedie"``  (default: ``"gaussian"``).
+        ``"gamma"``, ``"tweedie"``, ``"negbinomial"``  (default: ``"gaussian"``).
         """
         return self._parms.get("family")
 
     @family.setter
     def family(self, family):
-        assert_is_type(family, None, Enum("gaussian", "binomial", "quasibinomial", "ordinal", "multinomial", "poisson", "gamma", "tweedie"))
+        assert_is_type(family, None, Enum("gaussian", "binomial", "quasibinomial", "ordinal", "multinomial", "poisson", "gamma", "tweedie", "negbinomial"))
         self._parms["family"] = family
 
 
